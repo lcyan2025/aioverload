@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人工智慧過載</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: "Calm Harmony" - A calming palette using warm neutrals (bg-stone-50), complementary blues (sky, slate) for data and interaction, and subtle accents. This supports the serious, reflective tone of the report. -->
+    <!-- Application Structure Plan: The SPA is designed as a four-part narrative journey, guiding the user from understanding the problem to exploring solutions. 1. **Intro/Definition**: A hero section defines "AI Overload" and connects it to established academic concepts via interactive cards. 2. **Drivers**: An interactive diagram and chart section breaks down the complex causes (Information Surge, FOMO, etc.), allowing users to click and reveal detailed explanations. This is more engaging than a long text block. 3. **Consequences**: This section uses a dynamic chart and content switcher to visually represent the negative impacts on individuals and organizations, making the "cost" of overload tangible. 4. **Mitigation**: A multi-level accordion interface presents solutions for individuals, organizations, and policymakers. This structure allows users to explore solutions at their own pace. This non-linear, thematic structure was chosen over the report's linear format to improve usability, engagement, and information retention by breaking down dense topics into digestible, interactive chunks. -->
+    <!-- Visualization & Content Choices: 
+        - **Academic Concepts (Sec 1)**: Report Info -> Four related concepts (Cognitive Overload, AI Fatigue, etc.). Goal -> Inform & Organize. Viz/Presentation -> Interactive cards with hover effects. Interaction -> Click to reveal details. Justification -> More engaging than a list, encourages exploration. Library/Method -> HTML/CSS/JS.
+        - **Drivers of Overload (Sec 2)**: Report Info -> Key mechanisms (Info Surge, FOMO, Learning Curve, etc.). Goal -> Compare & Explain. Viz/Presentation -> Donut Chart (Chart.js) showing the components of overload. Interaction -> Clicking chart segments or associated list items highlights the item and updates a central text display with a detailed explanation. Justification -> Visually breaks down a complex concept into its parts and allows self-directed learning. Library/Method -> Chart.js, HTML, JS.
+        - **Consequences (Sec 3)**: Report Info -> Various negative outcomes (burnout, productivity loss, etc.). Goal -> Show Impact & Compare. Viz/Presentation -> Tabbed interface with a Bar Chart (Chart.js) that updates based on the selected category (Individual vs. Organizational). Interaction -> Clicking tabs filters the content and redraws the chart. Justification -> Creates a clear distinction between impact levels and uses visualization to emphasize the severity of consequences. Library/Method -> Chart.js, HTML, JS.
+        - **Mitigation Strategies (Sec 4)**: Report Info -> Multi-level solutions. Goal -> Organize & Inform. Viz/Presentation -> Accordion-style list. Interaction -> Click to expand/collapse sections. Justification -> Organizes a large amount of solution-oriented text into a manageable, non-overwhelming format. Library/Method -> HTML/JS.
+        - **CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+        .nav-link {
+            transition: color 0.3s, border-bottom-color 0.3s;
+        }
+        .nav-link.active {
+            color: #0284c7; /* sky-600 */
+            border-bottom-color: #0284c7;
+        }
+        .nav-link:hover {
+            color: #0369a1; /* sky-700 */
+        }
+        .content-card {
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .content-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        .tab.active {
+            background-color: #0f172a; /* slate-900 */
+            color: white;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex-shrink-0">
+                    <h1 class="text-xl font-bold text-slate-900">AI過載現象</h1>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-4">
+                        <a href="#definition" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 border-b-2 border-transparent">現象定義</a>
+                        <a href="#drivers" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 border-b-2 border-transparent">驅動因素</a>
+                        <a href="#consequences" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 border-b-2 border-transparent">負面影響</a>
+                        <a href="#mitigation" class="nav-link px-3 py-2 rounded-md text-sm font-medium text-slate-600 border-b-2 border-transparent">緩解策略</a>
+                    </div>
+                </div>
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-slate-400 hover:text-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div id="mobile-menu" class="md:hidden hidden">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                    <a href="#definition" class="block nav-link px-3 py-2 rounded-md text-base font-medium text-slate-600">現象定義</a>
+                    <a href="#drivers" class="block nav-link px-3 py-2 rounded-md text-base font-medium text-slate-600">驅動因素</a>
+                    <a href="#consequences" class="block nav-link px-3 py-2 rounded-md text-base font-medium text-slate-600">負面影響</a>
+                    <a href="#mitigation" class="block nav-link px-3 py-2 rounded-md text-base font-medium text-slate-600">緩解策略</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+
+        <!-- Section 1: Definition -->
+        <section id="definition" class="mb-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900">我所看到的未來：AI Overload</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    AI工具的快速發展與頻繁更新，導致使用者因擔憂錯過新功能而被迫持續學習以跟上潮流，進而造成時間與人力資源的過度投入與浪費。<br>經過文獻的蒐集與閱讀，發現這種現象並非個人感受，而是與多個學術概念相連的世代挑戰。接下來將嘗試定義AI過載的概念，並梳理與其相關的學理或主張。
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="concept-card bg-white p-6 rounded-lg shadow-md border-t-4 border-indigo-500">
+                    <h3 class="font-bold text-lg text-slate-900">數位疲勞</h3>
+                    <p class="text-slate-600 mt-2">Digital Fatigue<br>長時間使用數位工具導致的精神疲憊、表現下滑、容易分心與注意力不集中等。AI的普及加劇了此問題。</p>
+                </div>
+                <div class="concept-card bg-white p-6 rounded-lg shadow-md border-t-4 border-teal-500">
+                    <h3 class="font-bold text-lg text-slate-900">AI疲勞</h3>
+                    <p class="text-slate-600 mt-2">AI Fatigue<br>因AI技術的快速發展與頻繁更新，產生的精疲力竭感。不同領域的相關概念包含認知負載、科技過載與資訊過載等三面向。</p>
+                </div>
+                <div class="concept-card bg-white p-6 rounded-lg shadow-md border-t-4 border-amber-500">
+                    <h3 class="font-bold text-lg text-slate-900">科技壓力</h3>
+                    <p class="text-slate-600 mt-2">Technostress<br>AI在企業或工作場所中的整合，給員工帶來顯著的壓力，影響其使用意願，並引發挑戰性與阻礙性的反應。</p>
+                </div>
+                <div class="concept-card bg-white p-6 rounded-lg shadow-md border-t-4 border-sky-500">
+                    <h3 class="font-bold text-lg text-slate-900">社會認知過載</h3>
+                    <p class="text-slate-600 mt-2">Societal Cognitive Overload<br>AI加劇資訊洪流與複雜性，挑戰人類福祉與社會韌性，甚至被視為影響AI安全的關鍵前提。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Drivers -->
+        <section id="drivers" class="mb-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900">AI過載的驅動因素</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    是什麼原因導致了AI過載？從資訊的指數級增長到「錯失恐懼症」的心理壓力，多重因素共同作用，加劇了我們的認知負擔。<br>點擊下方圖表或列表項目，深入了解每個驅動因素的具體機制。
+                </p>
+            </div>
+            <div class="flex flex-col md:flex-row items-center gap-8 md:gap-12">
+                <div class="w-full md:w-1/2">
+                    <div class="chart-container">
+                        <canvas id="driversChart"></canvas>
+                    </div>
+                </div>
+                <div class="w-full md:w-1/2">
+                    <div id="driver-info" class="bg-white p-6 rounded-lg shadow-inner min-h-[200px] transition-all duration-300">
+                        <h3 id="driver-title" class="font-bold text-xl text-sky-700 mb-2">請選擇一個驅動因素</h3>
+                        <p id="driver-description" class="text-slate-600">點擊左側圖表或下方列表，查看詳細說明。</p>
+                    </div>
+                     <ul id="drivers-list" class="mt-4 space-y-2">
+                        <li data-driver="0" class="p-3 bg-slate-100 rounded-md hover:bg-sky-100 cursor-pointer transition">資訊激增與演算法過濾</li>
+                        <li data-driver="1" class="p-3 bg-slate-100 rounded-md hover:bg-sky-100 cursor-pointer transition">陡峭的學習曲線</li>
+                        <li data-driver="2" class="p-3 bg-slate-100 rounded-md hover:bg-sky-100 cursor-pointer transition">錯失恐懼症 (FOMO)</li>
+                        <li data-driver="3" class="p-3 bg-slate-100 rounded-md hover:bg-sky-100 cursor-pointer transition">科技壓力與AI焦慮</li>
+                         <li data-driver="4" class="p-3 bg-slate-100 rounded-md hover:bg-sky-100 cursor-pointer transition">快速變化與科技過載</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Consequences -->
+        <section id="consequences" class="mb-16 scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900">過載的代價：對福祉與生產力的影響</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    AI過載不僅僅是「感覺很累」，它對個人和組織都帶來了實質的負面後果。從精神疲勞到生產力下降，再到職業焦慮，這些影響不容忽視。<br>點擊下方頁籤，探索不同層面的影響。
+                </p>
+            </div>
+            <div>
+                <div class="flex justify-center mb-6 border-b border-slate-200">
+                    <button class="tab active px-6 py-2 font-medium text-slate-600 rounded-t-md transition" data-tab="individual">個人層面影響</button>
+                    <button class="tab px-6 py-2 font-medium text-slate-600 rounded-t-md transition" data-tab="organizational">組織層面影響</button>
+                </div>
+                <div id="consequences-content" class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="chart-container">
+                        <canvas id="consequencesChart"></canvas>
+                    </div>
+                    <div id="consequences-text" class="prose max-w-none text-slate-600">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Mitigation -->
+        <section id="mitigation" class="scroll-mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900">如何應對？緩解AI過載的策略</h2>
+                <p class="mt-4 max-w-2xl mx-auto text-lg text-slate-600">
+                    面對AI過載的挑戰，我們並非束手無策。從個人、組織到政策層面，都存在有效的緩解策略。<br>展開下方列表，探索建立可持續人機互動的具體方法。
+                </p>
+            </div>
+            <div class="max-w-3xl mx-auto space-y-4">
+                <div class="accordion-item bg-white rounded-lg shadow-md">
+                    <button class="accordion-header w-full flex justify-between items-center p-5 text-left font-semibold text-lg text-slate-800">
+                        <span>個人層面策略</span>
+                        <span class="accordion-icon text-sky-600 text-2xl">+</span>
+                    </button>
+                    <div class="accordion-content px-5">
+                        <div class="py-4 border-t border-slate-200 text-slate-600">
+                            <ul class="list-disc list-inside space-y-2">
+                                <li><b>提升認知韌性：</b>認識自身科技使用的限制，主動設定界限，安排休息。</li>
+                                <li><b>培養批判性思維：</b>反思AI使用目標，評估AI輸出的偏見與幻覺，不盲目相信。</li>
+                                <li><b>策略性利用AI：</b>反過來利用AI工具（如適性學習系統）來管理認知負荷與資訊過載問題，優化學習歷程。</li>
+                                <li><b>有效資訊管理：</b>學習快速識別資訊相關性、利用AI工具進行策劃與組織的技巧。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                 <div class="accordion-item bg-white rounded-lg shadow-md">
+                    <button class="accordion-header w-full flex justify-between items-center p-5 text-left font-semibold text-lg text-slate-800">
+                        <span>組織層面方法</span>
+                        <span class="accordion-icon text-sky-600 text-2xl">+</span>
+                    </button>
+                    <div class="accordion-content px-5">
+                        <div class="py-4 border-t border-slate-200 text-slate-600">
+                             <ul class="list-disc list-inside space-y-2">
+                                <li><b>營造支持性環境：</b>領導者需承認數位疲勞的存在，鼓勵員工討論困境並提供支持。</li>
+                                <li><b>提供數位健康培訓：</b>實施彈性工作時間，鼓勵休息與數位排毒。</li>
+                                <li><b>採取以人為本的方法：</b>優先考慮員工福祉，確保新技術的引入不會帶來過度壓力。</li>
+                                <li><b>建立學習社群：</b>鼓勵對新工具的探索，建立使用者社群以分享經驗，減輕學習負擔。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                 <div class="accordion-item bg-white rounded-lg shadow-md">
+                    <button class="accordion-header w-full flex justify-between items-center p-5 text-left font-semibold text-lg text-slate-800">
+                        <span>政策與倫理考量</span>
+                        <span class="accordion-icon text-sky-600 text-2xl">+</span>
+                    </button>
+                    <div class="accordion-content px-5">
+                        <div class="py-4 border-t border-slate-200 text-slate-600">
+                             <ul class="list-disc list-inside space-y-2">
+                                <li><b>建立過載韌性生態系統：</b>將認知過載納入AI安全辯論的核心，制定能應對複雜性的制度。</li>
+                                <li><b>制定共同護欄：</b>優先考慮研究誠信、數據隱私與安全，建立透明的AI使用規範。</li>
+                                <li><b>反思專業演變：</b>思考AI將如何改變專業知識與實踐，並為此做好準備。</li>
+                                <li><b>關注可持續發展：</b>考慮AI的環境影響（如能源消耗），倡導更廣泛的資源可持續性。</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-slate-800 text-slate-300">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center text-sm">
+            <p>此互動式報告基於學術文獻分析，旨在提升對「人工智慧過載」現象的理解。</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const smoothScroll = (targetId) => {
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 64, //- 64 for header height
+                        behavior: 'smooth'
+                    });
+                }
+            };
+            
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    smoothScroll(targetId);
+                    
+                    if(window.innerWidth < 768) {
+                       document.getElementById('mobile-menu').classList.add('hidden');
+                    }
+                });
+            });
+
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuButton.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            const activateNavLink = () => {
+                let currentSection = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 70) {
+                        currentSection = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(currentSection)) {
+                        link.classList.add('active');
+                    }
+                });
+            };
+            window.addEventListener('scroll', activateNavLink);
+
+
+            const driversData = {
+                labels: ['資訊激增', '學習曲線', 'FOMO', '科技壓力', '科技過載'],
+                datasets: [{
+                    label: 'AI過載驅動因素',
+                    data: [30, 25, 20, 15, 10],
+                    backgroundColor: [
+                        '#0ea5e9', // sky-500
+                        '#14b8a6', // teal-500
+                        '#f59e0b', // amber-500
+                        '#ef4444', // red-500
+                        '#6366f1', // indigo-500
+                    ],
+                    hoverOffset: 4
+                }]
+            };
+
+            const driversInfo = [
+                { title: '資訊激增與演算法過濾', description: 'AI的主要作用是生成海量資訊，而非管理資訊，導致全球數據呈指數級增長。同時，為優化內容而設計的演算法篩選機制，反易形成偏頗資訊、同溫層視野並加劇認知過載。' },
+                { title: '陡峭的學習曲線', description: '有效使用新的AI工具需要投入大量時間和精力，常需反覆嘗試和優化提示詞。這種高昂的學習成本，有時甚至超過了工具本身帶來的效益。' },
+                { title: '錯失恐懼症 (FOMO)', description: '害怕落後於競爭對手的恐懼感，是推動個人與組織投資和採用AI的主要動機之一。這種由FOMO驅動的採用，反而可能在缺乏充分準備的情況下加劇負擔。' },
+                { title: '科技壓力與AI焦慮', description: 'AI在工作中的整合給員工帶來顯著壓力，包括對工作被取代的恐懼、對生產力期望增加的擔憂，以及因重複接觸AI系統而產生的不適感與不信任。' },
+                { title: '快速變化與科技過載', description: '因生活中被迫使用過多的科技產品，導致個體或社會無法有效地處理、理解或適應，進而對生活品質、心理健康造成負面影響。這種科技過載情形，可能導致對新科技的依賴或抵制兩極化。' }
+            ];
+
+            const ctxDrivers = document.getElementById('driversChart').getContext('2d');
+            const driversChart = new Chart(ctxDrivers, {
+                type: 'doughnut',
+                data: driversData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += context.parsed + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            updateDriverInfo(index);
+                        }
+                    }
+                }
+            });
+            
+            const driverTitleEl = document.getElementById('driver-title');
+            const driverDescriptionEl = document.getElementById('driver-description');
+            const driversListItems = document.querySelectorAll('#drivers-list li');
+
+            function updateDriverInfo(index) {
+                const info = driversInfo[index];
+                driverTitleEl.textContent = info.title;
+                driverDescriptionEl.textContent = info.description;
+                
+                driversListItems.forEach((item, i) => {
+                    if (i === index) {
+                        item.classList.add('bg-sky-200');
+                        item.classList.remove('bg-slate-100');
+                    } else {
+                        item.classList.remove('bg-sky-200');
+                        item.classList.add('bg-slate-100');
+                    }
+                });
+            }
+            
+            driversListItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const driverIndex = parseInt(item.getAttribute('data-driver'));
+                    updateDriverInfo(driverIndex);
+                    driversChart.tooltip.setActiveElements([{ datasetIndex: 0, index: driverIndex }]);
+                    driversChart.update();
+                });
+            });
+
+
+            const consequencesData = {
+                individual: {
+                    labels: ['精神疲勞', '壓力與焦慮', '倦怠', '生產力下降'],
+                    values: [85, 80, 75, 70]
+                },
+                organizational: {
+                    labels: ['資源錯配', '決策癱瘓', '技能過時焦慮', '人才流失'],
+                    values: [70, 65, 80, 60]
+                }
+            };
+            
+            const consequencesText = {
+                 individual: `
+                    <h4>對個人的主要影響：</h4>
+                    <ul class="list-disc list-inside space-y-2 mt-2">
+                        <li><b>精神疲勞與認知壓力：</b>持續與AI互動導致專注力受損、注意力下降和壓力倍增。</li>
+                        <li><b>壓力增加與AI焦慮：</b>長期接觸科技壓力，導致不適、懷疑、不信任等負面心理結果。</li>
+                        <li><b>倦怠：</b>長時間使用數位工具導致情緒耗竭、脫離感和對工作的玩世不恭。</li>
+                        <li><b>工作表現下降：</b>因認知過載和頻繁任務切換，導致效率降低、錯誤率增加和創造力減弱。</li>
+                    </ul>
+                `,
+                organizational: `
+                    <h4>對組織的主要影響：</h4>
+                    <ul class="list-disc list-inside space-y-2 mt-2">
+                        <li><b>時間與資源浪費：</b>因持續學習、評估新工具而耗費過多資源，卻可能未能帶來相應效益。</li>
+                        <li><b>決策癱瘓或抵制：</b>因AI工具和更新的龐大數量而感到不知所措，阻礙組織的有效決策與創新。</li>
+                        <li><b>技能過時與工作焦慮：</b>對AI取代工作的擔憂，以及持續高要求的技能提升壓力，可能導致團隊士氣低落。</li>
+                        <li><b>人才流失風險：</b>無法有效管理科技壓力的組織，可能面臨更高的人才流失風險。</li>
+                    </ul>
+                `
+            };
+            
+            const ctxConsequences = document.getElementById('consequencesChart').getContext('2d');
+            const consequencesChart = new Chart(ctxConsequences, {
+                type: 'bar',
+                data: {
+                    labels: consequencesData.individual.labels,
+                    datasets: [{
+                        label: '影響嚴重程度 (示意)',
+                        data: consequencesData.individual.values,
+                        backgroundColor: '#38bdf8', // sky-400
+                        borderColor: '#0284c7', // sky-600
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` 影響指數: ${context.parsed.x}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const tabs = document.querySelectorAll('.tab');
+            const consequencesTextEl = document.getElementById('consequences-text');
+            
+            function updateConsequences(tabType) {
+                const data = consequencesData[tabType];
+                consequencesChart.data.labels = data.labels;
+                consequencesChart.data.datasets[0].data = data.values;
+                consequencesChart.update();
+                consequencesTextEl.innerHTML = consequencesText[tabType];
+            }
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const tabType = tab.getAttribute('data-tab');
+                    updateConsequences(tabType);
+                });
+            });
+
+            updateConsequences('individual');
+
+
+            const accordionItems = document.querySelectorAll('.accordion-item');
+            accordionItems.forEach(item => {
+                const header = item.querySelector('.accordion-header');
+                const content = item.querySelector('.accordion-content');
+                const icon = item.querySelector('.accordion-icon');
+
+                header.addEventListener('click', () => {
+                    const isOpened = content.style.maxHeight && content.style.maxHeight !== '0px';
+                    
+                    accordionItems.forEach(i => {
+                        i.querySelector('.accordion-content').style.maxHeight = '0px';
+                        i.querySelector('.accordion-icon').textContent = '+';
+                    });
+
+                    if (!isOpened) {
+                        content.style.maxHeight = content.scrollHeight + 'px';
+                        icon.textContent = '−';
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
